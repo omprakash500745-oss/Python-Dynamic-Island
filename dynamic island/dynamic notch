@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dynamic Island PC</title>
+    <style>
+      * { box-sizing: border-box; }
+
+      :root {
+        --bg-1: #0a0f17;
+        --bg-2: #161e2d;
+        --panel: rgba(22, 28, 36, 0.86);
+        --glass: rgba(255,255,255,0.08);
+        --text: #eef4ff;
+        --muted: rgba(255,255,255,0.7);
+        --soft: rgba(255,255,255,0.15);
+        --accent: #6ed0ff;
+        --green: #4ade80;
+        --orange: #fbbf24;
+        --red: #f87171;
+        --pink: #ff79c6;
+        --shadow: 0 25px 60px rgba(0, 0, 0, 0.55);
+      }
+
+      html, body {
+        margin: 0;
+        width: 100%;
+        height: 100%;
+        font-family: Inter, "Segoe UI", system-ui, -apple-system, sans-serif;
+        color: var(--text);
+        background:
+          radial-gradient(circle at top, rgba(123, 191, 255, 0.24), transparent 35%),
+          linear-gradient(180deg, var(--bg-1), var(--bg-2));
+        overflow: hidden;
+      }
+
+      body {
+        display: grid;
+        place-items: center;
+      }
+
+      .scene {
+        position: relative;
+        width: min(92vw, 420px);
+        height: min(92vh, 860px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .phone {
+        position: relative;
+        width: 100%;
+        height: 100%;
+        border-radius: 44px;
+        background: linear-gradient(180deg, #070b12, #0c1015 26%, #05080d 100%);
+        box-shadow: var(--shadow);
+        border: 2px solid rgba(255,255,255,0.06);
+        overflow: hidden;
+      }
+
+      .screen {
+        position: absolute;
+        inset: 0;
+        border-radius: 44px;
+        overflow: hidden;
+        background:
+          linear-gradient(180deg, rgba(9,12,18,0.5), rgba(9,12,18,0.95)),
+          radial-gradient(circle at 50% 22%, rgba(86, 122, 199, 0.12), transparent 28%);
+      }
+
+      .wallpaper {
+        position: absolute;
+        inset: 0;
+        background:
+          linear-gradient(135deg, #091521 0%, #0d1630 30%, #12253c 50%, #0d1c2d 100%);
+      }
+
+      .wallpaper::before,
+      .wallpaper::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(120deg, rgba(255,255,255,0.1), transparent 28% 60%, rgba(255,255,255,0.04));
+      }
+
+      .wallpaper::after {
+        background:
+          radial-gradient(circle at 50% 18%, rgba(154, 194, 255, 0.18), transparent 22%),
+          radial-gradient(circle at 20% 50%, rgba(132, 211, 255, 0.2), transparent 28%),
+          radial-gradient(circle at 80% 70%, rgba(255, 156, 204, 0.15), transparent 30%);
+      }
+
+      .status-bar {
+        position: absolute;
+        top: 12px;
+        left: 0;
+        right: 0;
+        height: 28px;
+        padding: 0 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        color: rgba(255,255,255,0.9);
+        font-size: 14px;
+        font-weight: 600;
+        z-index: 10;
+      }
+
+      .status-icons {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+      }
+
+      .signal,
+      .wifi,
+      .battery {
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+      }
+
+      .dots {
+        display: inline-flex;
+        align-items: end;
+        gap: 2px;
+        height: 12px;
+      }
+
+      .dots span {
+        width: 3px;
+        border-radius: 2px;
+        background: rgba(255,255,255,0.9);
+        display: block;
+      }
+
+      .dots span:nth-child(1) { height: 4px; }
+      .dots span:nth-child(2) { height: 7px; }
+      .dots span:nth-child(3) { height: 10px; }
+      .dots span:nth-child(4) { height: 12px; }
+
+      .battery {
+        position: relative;
+        padding-right: 10px;
+      }
+
+      .battery::before {
+        content: "";
+        position: absolute;
+        right: 0;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 2px;
+        height: 5px;
+        background: rgba(255,255,255,0.9);
+        border-radius: 1px;
+      }
+
+      .battery-box {
+        width: 18px;
+        height: 10px;
+        border: 1.5px solid rgba(255,255,255,0.9);
+        border-radius: 3px;
+        position: relative;
+        background: linear-gradient(90deg, var(--green) 0 74%, rgba(255,255,255,0.2) 74% 100%);
+      }
+
+      .dynamic-island {
+        position: absolute;
+        top: 18px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 200px;
+        height: 40px;
+        border-radius: 999px;
+        background: rgba(7, 10, 15, 0.9);
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 12px 20px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.06);
+        z-index: 20;
+        transition: width 0.42s ease, height 0.42s ease, border-radius 0.42s ease, transform 0.32s ease;
+        overflow: hidden;
+      }
+
+      .dynamic-island.is-expanded {
+        width: 330px;
+        height: 148px;
+        border-radius: 36px;
+      }
+
+      .dynamic-island.is-call {
+        width: 312px;
+        height: 118px;
+        border-radius: 32px;
+      }
+
+      .mini-pill {
+        position: absolute;
+        inset: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 0 18px;
+        opacity: 1;
+        transition: opacity 0.28s ease;
+        z-index: 2;
+      }
+
+      .dynamic-island.is-expanded .mini-pill,
+      .dynamic-island.is-call .mini-pill {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      .cam-orb {
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #1d2228, #0d151d);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1), 0 0 0 1px rgba(0,0,0,0.1);
+      }
+
+      .mini-pill .text {
+        font-size: 12px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.85);
+        letter-spacing: 0.02em;
+      }
+
+      .live-content {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        transform: translateY(12px);
+        transition: opacity 0.28s ease, transform 0.32s ease;
+        pointer-events: none;
+        padding: 10px 16px 12px;
+      }
+
+      .dynamic-island.is-expanded .live-content,
+      .dynamic-island.is-call .live-content {
+        opacity: 1;
+        transform: translateY(0);
+        pointer-events: auto;
+      }
+
+      .call-ui,
+      .music-ui,
+      .timer-ui,
+      .notification-ui,
+      .airpods-ui,
+      .siri-ui {
+        position: absolute;
+        inset: 0;
+        display: none;
+      }
+
+      .dynamic-island[data-state="call"] .call-ui,
+      .dynamic-island[data-state="music"] .music-ui,
+      .dynamic-island[data-state="timer"] .timer-ui,
+      .dynamic-island[data-state="notification"] .notification-ui,
+      .dynamic-island[data-state="airpods"] .airpods-ui,
+      .dynamic-island[data-state="siri"] .siri-ui {
+        display: block;
+      }
+
+      .call-ui {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+      }
+
+      .avatar {
+        width: 44px;
+        height: 44px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, #84a7ff, #2d4d9f);
+        box-shadow: inset 0 0 0 2px rgba(255,255,255,0.2);
+        position: relative;
+        margin-left: 10px;
+      }
+
+      .avatar::before {
+        content: "";
+        position: absolute;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.2);
+        top: 8px;
+        left: 14px;
+      }
+
+      .avatar::after {
+        content: "";
+        position: absolute;
+        width: 26px;
+        height: 16px;
+        border-radius: 14px 14px 7px 7px;
+        background: rgba(255,255,255,0.24);
+        bottom: 8px;
+        left: 9px;
+      }
+
+      .caller-meta {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+      }
+
+      .caller-meta .name {
+        font-size: 13px;
+        font-weight: 700;
+      }
+
+      .caller-meta .type {
+        font-size: 11px;
+        color: rgba(255,255,255,0.72);
+      }
+
+      .call-actions {
+        display: flex;
+        gap: 8px;
+        margin-right: 12px;
+      }
+
+      .action-btn {
+        width: 36px;
+        height: 36px;
+        border: none;
+        border-radius: 50%;
+        display: grid;
+        place-items: center;
+        color: white;
+        background: rgba(255,255,255,0.12);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        font-size: 15px;
+      }
+
+      .action-btn.accept {
+        background: linear-gradient(180deg, #7af0a4, #36c76d);
+        color: #062915;
+      }
+
+      .action-btn.reject {
+        background: linear-gradient(180deg, #ff9a9a, #f75c5c);
+        color: white;
+      }
+
+      .music-ui {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 12px;
+      }
+
+      .album-art {
+        width: 46px;
+        height: 46px;
+        border-radius: 12px;
+        background:
+          linear-gradient(135deg, rgba(255,255,255,0.16), transparent),
+          linear-gradient(180deg, #fca5a5, #f97316 45%, #312e81 100%);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .album-art::before {
+        content: "";
+        position: absolute;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        border: 2px solid rgba(255,255,255,0.5);
+        inset: 12px;
+      }
+
+      .song-meta {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .song-meta .track {
+        font-size: 12px;
+        font-weight: 700;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .song-meta .artist {
+        font-size: 10px;
+        color: rgba(255,255,255,0.68);
+      }
+
+      .progress {
+        height: 4px;
+        width: 100%;
+        margin-top: 6px;
+        background: rgba(255,255,255,0.14);
+        border-radius: 99px;
+        overflow: hidden;
+      }
+
+      .progress > span {
+        display: block;
+        width: 42%;
+        height: 100%;
+        background: linear-gradient(90deg, #fff, #8ad7ff);
+        border-radius: inherit;
+      }
+
+      .playback {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin-right: 6px;
+      }
+
+      .play {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.12);
+        border: none;
+        color: white;
+        font-size: 12px;
+      }
+
+      .timer-ui {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+      }
+
+      .timer-badge {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .timer-icon {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: linear-gradient(180deg, rgba(249, 115, 22, 0.8), rgba(190, 90, 19, 0.85));
+        display: grid;
+        place-items: center;
+        font-size: 16px;
+      }
+
+      .timer-copy {
+        display: flex;
+        flex-direction: column;
+      }
+
+      .timer-copy .headline {
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .timer-copy .time {
+        font-size: 11px;
+        color: rgba(255,255,255,0.72);
+      }
+
+      .notification-ui {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 14px;
+      }
+
+      .notify-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #7dd3fc, #2563eb);
+        display: grid;
+        place-items: center;
+        font-size: 14px;
+      }
+
+      .notify-copy {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        margin-left: 8px;
+      }
+
+      .notify-copy .headline {
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .notify-copy .sub {
+        font-size: 10px;
+        color: rgba(255,255,255,0.7);
+      }
+
+      .airpods-ui {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .airpods-ui .chip {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background: rgba(255,255,255,0.08);
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+      }
+
+      .airpods-ui .chip.on {
+        background: linear-gradient(180deg, #6ee7b7, #22c55e);
+      }
+
+      .airpods-ui .label {
+        font-size: 12px;
+        font-weight: 700;
+        color: rgba(255,255,255,0.8);
+      }
+
+      .siri-ui {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+      }
+
+      .siri-wave {
+        display: flex;
+        align-items: end;
+        gap: 3px;
+        height: 18px;
+      }
+
+      .siri-wave span {
+        display: block;
+        width: 4px;
+        border-radius: 99px;
+        background: linear-gradient(180deg, rgba(255,255,255,0.8), rgba(255,255,255,0.4));
+        animation: wave 1.2s ease-in-out infinite;
+      }
+
+      .siri-wave span:nth-child(2) { animation-delay: 0.12s; }
+      .siri-wave span:nth-child(3) { animation-delay: 0.24s; }
+      .siri-wave span:nth-child(4) { animation-delay: 0.36s; }
+      .siri-wave span:nth-child(5) { animation-delay: 0.48s; }
+
+      @keyframes wave {
+        0%, 100% { height: 4px; opacity: 0.5; }
+        50% { height: 18px; opacity: 1; }
+      }
+
+      .controls {
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+        bottom: 28px;
+        width: min(82%, 360px);
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 10px;
+        z-index: 25;
+      }
+
+      .chip-btn {
+        border: none;
+        border-radius: 999px;
+        padding: 10px 14px;
+        background: rgba(255,255,255,0.08);
+        color: white;
+        font-weight: 600;
+        box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+        cursor: pointer;
+        transition: transform 0.2s ease, background 0.2s ease;
+      }
+
+      .chip-btn:hover {
+        transform: translateY(-1px);
+        background: rgba(255,255,255,0.12);
+      }
+
+      .chip-btn.primary {
+        background: linear-gradient(180deg, rgba(110, 200, 255, 0.35), rgba(110,200,255,0.14));
+      }
+
+      .chip-btn.danger {
+        background: rgba(239, 68, 68, 0.15);
+      }
+
+      @media (max-width: 480px) {
+        .scene {
+          width: 100vw;
+          height: 100vh;
+        }
+
+        .phone {
+          border-radius: 0;
+        }
+
+        .screen {
+          border-radius: 0;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="scene">
+      <div class="phone">
+        <div class="screen">
+          <div class="wallpaper"></div>
+
+          <div class="status-bar">
+            <div>9:41</div>
+            <div class="status-icons">
+              <span class="signal"><span class="dots"><span></span><span></span><span></span><span></span></span></span>
+              <span class="wifi">◔</span>
+              <span class="battery"><span class="battery-box"></span></span>
+            </div>
+          </div>
+
+          <div class="dynamic-island" id="dynamicIsland" data-state="music">
+            <div class="mini-pill">
+              <span class="cam-orb"></span>
+              <span class="text">Live Activities</span>
+            </div>
+
+            <div class="live-content">
+              <div class="call-ui">
+                <div class="avatar"></div>
+                <div class="caller-meta">
+                  <div class="name">Maya</div>
+                  <div class="type">Incoming call</div>
+                </div>
+                <div class="call-actions">
+                  <button class="action-btn reject" aria-label="Decline">✕</button>
+                  <button class="action-btn accept" aria-label="Accept">✓</button>
+                </div>
+              </div>
+
+              <div class="music-ui">
+                <div class="album-art"></div>
+                <div class="song-meta">
+                  <div class="track">Midnight Run</div>
+                  <div class="artist">Nova Echo</div>
+                  <div class="progress"><span></span></div>
+                </div>
+                <div class="playback">
+                  <button class="play" aria-label="Play/Pause">❚❚</button>
+                </div>
+              </div>
+
+              <div class="timer-ui">
+                <div class="timer-badge">
+                  <div class="timer-icon">⏱</div>
+                  <div class="timer-copy">
+                    <div class="headline">Timer</div>
+                    <div class="time">08:45</div>
+                  </div>
+                </div>
+                <div class="call-actions">
+                  <button class="action-btn accept" aria-label="Timer done">✓</button>
+                </div>
+              </div>
+
+              <div class="notification-ui">
+                <div class="notify-icon">✦</div>
+                <div class="notify-copy">
+                  <div class="headline">3 unread messages</div>
+                  <div class="sub">From Design Team</div>
+                </div>
+                <div class="call-actions">
+                  <button class="action-btn" aria-label="Open notifications">›</button>
+                </div>
+              </div>
+
+              <div class="airpods-ui">
+                <div class="chip on"></div>
+                <div class="chip on"></div>
+                <div class="label">AirPods Pro 2</div>
+              </div>
+
+              <div class="siri-ui">
+                <div class="siri-wave">
+                  <span style="height: 8px"></span>
+                  <span style="height: 12px"></span>
+                  <span style="height: 18px"></span>
+                  <span style="height: 12px"></span>
+                  <span style="height: 8px"></span>
+                </div>
+                <div class="label" style="font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.8)">Listening…</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="controls">
+            <button class="chip-btn primary" data-state="music">Music</button>
+            <button class="chip-btn" data-state="call">Call</button>
+            <button class="chip-btn" data-state="timer">Timer</button>
+            <button class="chip-btn" data-state="notification">Alert</button>
+            <button class="chip-btn" data-state="airpods">AirPods</button>
+            <button class="chip-btn" data-state="siri">Siri</button>
+            <button class="chip-btn danger" id="toggleIsland">Expand</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const island = document.getElementById('dynamicIsland');
+      const toggleBtn = document.getElementById('toggleIsland');
+      const stateButtons = [...document.querySelectorAll('[data-state]')];
+
+      function setIslandState(state, expanded = true) {
+        island.dataset.state = state;
+        island.classList.toggle('is-expanded', expanded);
+        island.classList.toggle('is-call', state === 'call');
+        toggleBtn.textContent = expanded ? 'Collapse' : 'Expand';
+      }
+
+      stateButtons.forEach((button) => {
+        button.addEventListener('click', () => {
+          const state = button.dataset.state;
+          setIslandState(state, true);
+        });
+      });
+
+      toggleBtn.addEventListener('click', () => {
+        const isExpanded = island.classList.contains('is-expanded');
+        island.classList.toggle('is-expanded', !isExpanded);
+        island.classList.toggle('is-call', false);
+        toggleBtn.textContent = isExpanded ? 'Expand' : 'Collapse';
+      });
+
+      let activeState = 'music';
+      const states = ['music', 'call', 'timer', 'notification', 'airpods', 'siri'];
+
+      setInterval(() => {
+        const index = states.indexOf(activeState);
+        activeState = states[(index + 1) % states.length];
+        setIslandState(activeState, true);
+      }, 5000);
+    </script>
+  </body>
+</html>
